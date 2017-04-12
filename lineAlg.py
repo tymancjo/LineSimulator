@@ -134,6 +134,9 @@ class mainApp:
         n_printTheArray(self.moveArray, self.canvas)
 
     def showControls(self):
+        for window in controlWindow.listOfWindows:
+            window.destroy()
+
         for manip in manipulator.listOfManipulators:
             manip.getControls(tk.Toplevel(self.master), self.moveArray, self.canvas )
 
@@ -145,8 +148,12 @@ class controlWindow:
     '''This is a control window object for manipulators'''
     manipulator = None
     moveArray = None
+    listOfWindows = []
 
     def __init__(self, master, manipulator, moveArray, canvas):
+
+        controlWindow.listOfWindows.append(self)
+
         self.manipulator = manipulator
         self.moveArray = moveArray
         self.master = master
@@ -176,6 +183,9 @@ class controlWindow:
                     format(self.manipulator.name, self.manipulator.iD ))
 
         self.frame.pack(padx=10, pady=10)
+
+    def destroy(self):
+        self.master.destroy()
 
     def mebypass(self):
         print('Trying to prevent close')
