@@ -5,6 +5,9 @@ import pandas as pd
 import tkinter as tk
 
 def printArray(theArray, theCanvas):
+    '''Wrapper around graphic proint to give possibility for
+     terminal feedback'''
+
     # col = theArray.shape[1]
     # print(theArray)
     #
@@ -12,8 +15,6 @@ def printArray(theArray, theCanvas):
     #     print('\r')
 
     n_printTheArray(dataArray=theArray, canvas=theCanvas)
-
-
 
 # Procedure that plot the array to canvas
 def n_printTheArray(dataArray, canvas):
@@ -83,12 +84,9 @@ def n_printTheArray(dataArray, canvas):
                         (Col)*dX+dX, (Row)*dY+dY, fill='white', width=2)
 
 
-
 # ####################
 # From here Classes ;)
 # ####################
-
-
 
 
 class mainApp:
@@ -102,20 +100,29 @@ class mainApp:
         self.frame = tk.Frame(self.master)
         self.button1 = tk.Button(self.frame, text = 'Quit All!',
                                     width = 25, command = self.new_window)
-        self.button1.pack()
-        self.button1 = tk.Button(self.frame,
-                text = 'Draw', width = 25, command = self.draw_window)
-        self.button1.pack()
+        self.button1.pack(side='left')
+        self.button2 = tk.Button(self.frame,
+                text = 'Redraw', width = 25, command = self.drawWindow)
+        self.button2.pack(side='left')
 
-        self.canvas = tk.Canvas(master,
+        self.button3 = tk.Button(self.frame,
+                text = 'Bring Controls', width = 25, command = self.showControls)
+        self.button3.pack(side='left')
+
+        self.cframe = tk.Frame(self.master)
+        self.canvas = tk.Canvas(self.cframe,
                    width=800,
                    height=600)
         self.canvas.configure(background='navy')
-        self.canvas.pack()
+        self.canvas.pack(fill='both', expand='yes')
         self.master.tk_setPalette(background='#ececec')
         self.master.title('Transport Simulator - v00')
 
-        self.frame.pack()
+        self.canvas.bind("<Configure>", self.drawWindow)
+
+        self.cframe.pack(fill='both', expand='yes')
+        self.frame.pack(fill='both', expand='no')
+
 
     def mebypass(self):
         print('Trying to prevent close')
@@ -123,9 +130,10 @@ class mainApp:
     def new_window(self):
         self.master.destroy()
 
-    def draw_window(self):
+    def drawWindow(self, *arg):
         n_printTheArray(self.moveArray, self.canvas)
 
+    def showControls(self):
         for manip in manipulator.listOfManipulators:
             manip.getControls(tk.Toplevel(self.master), self.moveArray, self.canvas )
 

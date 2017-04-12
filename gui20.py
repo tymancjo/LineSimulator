@@ -23,7 +23,9 @@ def main():
     Ewa = manipulator(liniaBck, 3, 7, 'Ewa', 20, 'green')
     Zdzich = manipulator(liniaBck, 3, 11, 'Zdzich', 30, 'orange')
 
-    app.draw_window()
+    app.drawWindow()
+    app.showControls()
+    
     root.mainloop()
 
 
