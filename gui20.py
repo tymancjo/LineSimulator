@@ -7,7 +7,7 @@ def main():
     liniaBck = np.zeros((5,16))
     liniaBck[2,1:15] = 1
 
-    liniaBck[1,2] = 1
+    liniaBck[1,2] = 6
     liniaBck[1,4] = 5
     liniaBck[1,6] = 1
 

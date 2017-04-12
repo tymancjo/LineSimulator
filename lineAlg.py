@@ -71,9 +71,16 @@ def n_printTheArray(dataArray, canvas):
 
                 canvas.create_rectangle((Col)*dX, (Row)*dY,
                     (Col)*dX+dX, (Row)*dY+dY, fill=fillColor, outline="white")
+
                 if buforBck > 1:
-                    canvas.create_line((Col)*dX, (Row)*dY,
-                    (Col)*dX+dX, (Row)*dY+dY, fill='white', width=2)
+                    if isGrab:
+                        canvas.create_line((Col)*dX, (Row)*dY,
+                        (Col)*dX+dX, (Row)*dY+dY, fill='white', width=2)
+                        canvas.create_line((Col)*dX+dX, (Row)*dY,
+                        (Col)*dX, (Row)*dY+dY, fill='white', width=2)
+                    else:
+                        canvas.create_line((Col)*dX, (Row)*dY,
+                        (Col)*dX+dX, (Row)*dY+dY, fill='white', width=2)
 
 
 
@@ -183,6 +190,7 @@ class controlWindow:
 
     def grab(self):
         self.manipulator.grab()
+        printArray(self.moveArray, self.canvas)
 
 class manipulator:
     '''This class will cover all manipulator behaviours'''
@@ -231,16 +239,22 @@ class manipulator:
 
     def checkMove(self,direction,envMatrix):
         if direction in self.directions:
+            # to prevent move with grab to othe place with zawieszka
+            if self.isGrab:
+                myRange = range(1,2)
+            else:
+                myRange = range(1,10)
+
             if direction == 'N':
                 if envMatrix[self.currentPositionRow-1,
-                             self.currentPositionCol] in range(1,9):
+                             self.currentPositionCol] in myRange:
                     return True
                 else:
                     return False
 
             elif direction == 'S':
                 if envMatrix[self.currentPositionRow+1,
-                             self.currentPositionCol] in range(1,9):
+                             self.currentPositionCol] in myRange:
                     return True
 
                 else:
@@ -248,14 +262,14 @@ class manipulator:
 
             elif direction == 'E':
                 if envMatrix[self.currentPositionRow,
-                             self.currentPositionCol+1] in range(1,9):
+                             self.currentPositionCol+1] in myRange:
                     return True
                 else:
                     return False
 
             elif direction == 'W':
                 if envMatrix[self.currentPositionRow,
-                             self.currentPositionCol-1] in range(1,9):
+                             self.currentPositionCol-1] in myRange:
                     return True
                 else:
                     return False
