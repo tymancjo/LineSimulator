@@ -1,14 +1,6 @@
 import tkinter as tk
 from lineAlg import *
 
-def creataManipulator(root,array, row, col, name, iD, canvas, color):
-    newManipulator = manipulator(array, row, col, name, iD, color)
-    newWindow = tk.Toplevel(root)
-    sterNewmanipulator = controlWindow(newWindow,
-                        newManipulator, array, canvas)
-    return newManipulator
-
-
 def main():
 
     # Drawing the shape of the line grid
@@ -16,7 +8,7 @@ def main():
     liniaBck[2,1:15] = 1
 
     liniaBck[1,2] = 1
-    liniaBck[1,4] = 1
+    liniaBck[1,4] = 5
     liniaBck[1,6] = 1
 
     liniaBck[3,3] = 1
@@ -27,10 +19,9 @@ def main():
     app = mainApp(root, liniaBck)
     canvas = app.getCanvas()
 
-    Adam = creataManipulator(root,liniaBck,2,1,'Adam',10, canvas, 'red')
-    Ewa  = creataManipulator(root,liniaBck,3,7,'Ewa',20, canvas, 'green')
-    Zdzich  = creataManipulator(root,liniaBck,3,11,'Zdzich',30, canvas, 'orange')
-
+    Adam = manipulator(liniaBck[:, 5:], 3, 4 , 'Adam', 10, 'red')
+    Ewa = manipulator(liniaBck, 3, 7, 'Ewa', 20, 'green')
+    Zdzich = manipulator(liniaBck, 3, 11, 'Zdzich', 30, 'orange')
 
     app.draw_window()
     root.mainloop()

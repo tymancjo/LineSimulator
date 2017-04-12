@@ -46,22 +46,36 @@ def n_printTheArray(dataArray, canvas):
 
     for Row in range(elementsInY):
         for Col in range(elementsInX):
-            if dataArray[Row][Col] == 1:
+            # Obsluga tla linii
+            if dataArray[Row][Col] > 0 and dataArray[Row][Col] < 10 :
                 fillColor = "gray"
                 canvas.create_rectangle((Col)*dX, (Row)*dY,
                     (Col)*dX+dX, (Row)*dY+dY, fill=fillColor, outline="white")
 
+                if dataArray[Row][Col] > 1:
+                    canvas.create_line((Col)*dX, (Row)*dY,
+                    (Col)*dX+dX, (Row)*dY+dY, fill='white', width=2)
+
+            # Obsluga manipulatora
             elif dataArray[Row][Col] >= 10:
 
                 fillColor = 'black'
+                isGrab = False
 
                 iD = dataArray[Row][Col]
                 for mani in manipulator.listOfManipulators:
                     if iD == mani.iD:
                         fillColor = mani.color
+                        isGrab = mani.isGrab
+                        buforBck = mani.buforBck
 
                 canvas.create_rectangle((Col)*dX, (Row)*dY,
                     (Col)*dX+dX, (Row)*dY+dY, fill=fillColor, outline="white")
+                if buforBck > 1:
+                    canvas.create_line((Col)*dX, (Row)*dY,
+                    (Col)*dX+dX, (Row)*dY+dY, fill='white', width=2)
+
+
 
 # ####################
 # From here Classes ;)
@@ -79,7 +93,8 @@ class mainApp:
         self.master = master
         self.moveArray = moveArray
         self.frame = tk.Frame(self.master)
-        self.button1 = tk.Button(self.frame, text = 'Quit All!', width = 25, command = self.new_window)
+        self.button1 = tk.Button(self.frame, text = 'Quit All!',
+                                    width = 25, command = self.new_window)
         self.button1.pack()
         self.button1 = tk.Button(self.frame,
                 text = 'Draw', width = 25, command = self.draw_window)
@@ -95,11 +110,17 @@ class mainApp:
 
         self.frame.pack()
 
+    def mebypass(self):
+        print('Trying to prevent close')
+
     def new_window(self):
         self.master.destroy()
 
     def draw_window(self):
         n_printTheArray(self.moveArray, self.canvas)
+
+        for manip in manipulator.listOfManipulators:
+            manip.getControls(tk.Toplevel(self.master), self.moveArray, self.canvas )
 
 
     def getCanvas(self):
@@ -132,10 +153,17 @@ class controlWindow:
                             text = 'South', width = 5,
                             command = self.moveS).grid(column=1, row=2)
 
+        self.gButton = tk.Button(self.frame,
+                            text = 'Grab', width = 5,
+                            command = self.grab).grid(column=1, row=1)
+
         self.master.title('{} ({})'.
                     format(self.manipulator.name, self.manipulator.iD ))
 
         self.frame.pack(padx=10, pady=10)
+
+    def mebypass(self):
+        print('Trying to prevent close')
 
     def moveN(self):
         self.manipulator.move('N', self.moveArray)
@@ -153,11 +181,16 @@ class controlWindow:
         self.manipulator.move('E', self.moveArray)
         printArray(self.moveArray, self.canvas)
 
+    def grab(self):
+        self.manipulator.grab()
+
 class manipulator:
     '''This class will cover all manipulator behaviours'''
     currentPositionRow=0
     currentPositionCol=0
     listOfManipulators = []
+    isGrab = False
+    buforBck = 1
 
     directions = ['N','S','E','W']
 
@@ -165,15 +198,16 @@ class manipulator:
         '''This will set up our manipulator and place it on position'''
 
         manipulator.listOfManipulators.append(self)
+        self.envMatrix = envMatrix
 
         self.name = name
         self.iD = iD
         self.color = color
 
-        if envMatrix[posRow,posCol] == 1:
+        if self.envMatrix[posRow,posCol] == 1:
             self.currentPositionRow = posRow
             self.currentPositionCol = posCol
-            envMatrix[self.currentPositionRow, self.currentPositionCol] = self.iD
+            self.envMatrix[self.currentPositionRow, self.currentPositionCol] = self.iD
         else:
             print('Cannot place {} at position {} {}'
                     .format(name, posCol, posRow ))
@@ -188,18 +222,25 @@ class manipulator:
         '''Just return a current position in matrix'''
         return self.currentPositionRow, self.currentPositionCol
 
+    def grab(self):
+        if self.isGrab:
+            self.isGrab = False
+        else:
+            if self.buforBck != 1:
+                self.isGrab = True
+
     def checkMove(self,direction,envMatrix):
         if direction in self.directions:
             if direction == 'N':
                 if envMatrix[self.currentPositionRow-1,
-                             self.currentPositionCol] == 1:
+                             self.currentPositionCol] in range(1,9):
                     return True
                 else:
                     return False
 
             elif direction == 'S':
                 if envMatrix[self.currentPositionRow+1,
-                             self.currentPositionCol] == 1:
+                             self.currentPositionCol] in range(1,9):
                     return True
 
                 else:
@@ -207,26 +248,32 @@ class manipulator:
 
             elif direction == 'E':
                 if envMatrix[self.currentPositionRow,
-                             self.currentPositionCol+1] == 1:
+                             self.currentPositionCol+1] in range(1,9):
                     return True
                 else:
                     return False
 
             elif direction == 'W':
                 if envMatrix[self.currentPositionRow,
-                             self.currentPositionCol-1] == 1:
+                             self.currentPositionCol-1] in range(1,9):
                     return True
                 else:
                     return False
         else:
             return False
 
-    def move(self, direction, envMatrix):
+    def move(self, direction, *arg):
         '''This procedure moves the manipulator to new position if possible'''
         # Verified that we can move
-        if self.checkMove(direction, envMatrix):
-            # Placing 1 to background array in current position
-            envMatrix[self.currentPositionRow, self.currentPositionCol] = 1
+        if self.checkMove(direction, self.envMatrix):
+
+            # Placing buffored value to background array in current position
+            if self.isGrab:
+                self.envMatrix[self.currentPositionRow,
+                            self.currentPositionCol] = 1
+            else:
+                self.envMatrix[self.currentPositionRow,
+                            self.currentPositionCol] = self.buforBck
 
             if direction == 'N':
                 self.currentPositionRow -=1
@@ -240,14 +287,21 @@ class manipulator:
             elif direction == 'W':
                 self.currentPositionCol -=1
 
+            # Putting existing value in buffored
+            if not(self.isGrab):
+                self.buforBck = self.envMatrix[self.currentPositionRow,
+                        self.currentPositionCol]
+
             # Entering the name into new position
-            envMatrix[self.currentPositionRow,
+            self.envMatrix[self.currentPositionRow,
                         self.currentPositionCol] = self.iD
 
             return True
         else:
             return False
 
+    def getControls(self, master, moveArray, canvas):
+        return controlWindow(master, self, moveArray, canvas)
 
 
 if __name__ == '__main__':
