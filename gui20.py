@@ -14,17 +14,20 @@ def main():
     liniaBck[3,3] = 1
     liniaBck[3,7:12:2] = 1
 
+    pulpit = recorder(liniaBck, None)
 
     root = tk.Tk()
-    app = mainApp(root, liniaBck)
+    app = mainApp(root, liniaBck, pulpit)
     canvas = app.getCanvas()
+    pulpit.canvas = canvas
 
-    pulpit = recorder(liniaBck, canvas)
+    VCRwindow = tk.Toplevel()
+    myVCR = recorederWindow(VCRwindow, pulpit)
 
 
-    Adam = manipulator(liniaBck[:, 5:], 3, 4 , 'Adam', 10, 'red')
-    Ewa = manipulator(liniaBck, 3, 7, 'Ewa', 20, 'green')
-    Zdzich = manipulator(liniaBck, 3, 11, 'Zdzich', 30, 'orange')
+    Adam = manipulator(liniaBck, liniaBck[:, 5:], 3, 4 , 'Adam', 10, canvas, pulpit)
+    Ewa = manipulator(liniaBck, liniaBck, 3, 7, 'Ewa', 20, canvas, pulpit)
+    Zdzich = manipulator(liniaBck, liniaBck, 3, 11, 'Zdzich', 30, canvas, pulpit)
 
     display(liniaBck, canvas)
     app.showControls()

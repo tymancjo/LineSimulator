@@ -4,7 +4,7 @@ import pandas as pd
 
 import tkinter as tk
 
-def printArray(theArray, theCanvas):
+def printArray(theArray, theCanvas, theRecorder):
     '''Wrapper around graphic proint to give possibility for
      terminal feedback'''
 
@@ -15,7 +15,12 @@ def printArray(theArray, theCanvas):
     #     print('\r')
 
     # n_printTheArray(dataArray=theArray, canvas=theCanvas)
-    display(theArray, theCanvas)
+
+    display(theArray, theCanvas) # Showing the graph
+    if theRecorder.rec:
+        theRecorder.record() # recording the state
+
+    print('No. of steps: {}'.format(theRecorder.getTotalTime()))
 
 def display(dataArray, canvas):
     colors = { 10: 'red', 20: 'green', 30: 'blue', 40: 'orange', 50: 'yellow' }
@@ -106,6 +111,7 @@ class recorder:
     colors = { 10: 'red', 20: 'green', 30: 'blue', 40: 'orange', 50: 'yellow' }
 
 
+
     def __init__(self, matrix, canvas):
         '''This function prepare the recorder object.
         Input:
@@ -116,6 +122,21 @@ class recorder:
         self.dataArray = matrix
         self.canvas = canvas
         self.colors = recorder.colors
+        self.recording = []
+        self.timestep = 0
+        self.rec = False #to globally control recording
+
+    def record(self):
+        self.recording.append(self.dataArray)
+        self.timestep += 1
+
+    def getTime(self):
+        return self.timestep
+
+    def getTotalTime(self):
+        return len(self.recording)
+
+
 
 
 
@@ -126,9 +147,11 @@ class mainApp:
     moveArray = None
     recorder = None
 
-    def __init__(self, master, moveArray):
+    def __init__(self, master, moveArray, recorder):
         self.master = master
         self.moveArray = moveArray
+        self.recorder = recorder
+
         self.frame = tk.Frame(self.master)
         self.button1 = tk.Button(self.frame, text = 'Quit All!',
                                     width = 25, command = self.new_window)
@@ -163,7 +186,6 @@ class mainApp:
         self.master.destroy()
 
     def drawWindow(self, *arg):
-
         display(self.moveArray, self.canvas)
 
     def showControls(self):
@@ -171,7 +193,7 @@ class mainApp:
             window.destroy()
 
         for manip in manipulator.listOfManipulators:
-            manip.getControls(tk.Toplevel(self.master), self.moveArray, self.canvas )
+            manip.getControls(tk.Toplevel(self.master), self.moveArray, self.canvas, self.recorder )
 
 
     def getCanvas(self):
@@ -179,9 +201,35 @@ class mainApp:
 
 class recorederWindow:
     '''This is class for the window that will keep controls for the recorder'''
+    listOfWindows = []
 
-    def __init__(self, recorder):
-        pass
+    def __init__(self, master, recorder):
+
+        recorederWindow.listOfWindows.append(self)
+
+        self.master = master
+        self.recorder = recorder
+        self.rec = False #to globally control recording
+
+        self.frame = tk.Frame(self.master)
+        self.recButton = tk.Button(self.frame,
+                            text = 'Rec/Stop', width = 15, bg='silver',
+                            command = self.toogleRec ).pack()
+
+        self.frame.pack(padx=10, pady=10)
+
+
+    def toogleRec(self):
+
+        self.rec = not(self.rec)
+        self.recorder.rec = self.rec
+
+        if self.rec:
+            color='red'
+        else:
+            color = 'silver'
+
+        self.master.configure(bg = color)
 
 
 class controlWindow:
@@ -190,7 +238,7 @@ class controlWindow:
     moveArray = None
     listOfWindows = []
 
-    def __init__(self, master, manipulator, moveArray, canvas):
+    def __init__(self, master, manipulator, moveArray, canvas, recorder):
 
         controlWindow.listOfWindows.append(self)
 
@@ -198,6 +246,7 @@ class controlWindow:
         self.moveArray = moveArray
         self.master = master
         self.canvas = canvas
+        self.recorder = recorder
 
         self.frame = tk.Frame(self.master, bg=self.manipulator.color)
 
@@ -232,23 +281,23 @@ class controlWindow:
 
     def moveN(self):
         self.manipulator.move('N', self.moveArray)
-        printArray(self.moveArray, self.canvas)
+
 
     def moveW(self):
         self.manipulator.move('W', self.moveArray)
-        printArray(self.moveArray, self.canvas)
+
 
     def moveS(self):
         self.manipulator.move('S', self.moveArray)
-        printArray(self.moveArray, self.canvas)
+
 
     def moveE(self):
         self.manipulator.move('E', self.moveArray)
-        printArray(self.moveArray, self.canvas)
+
 
     def grab(self):
         self.manipulator.grab()
-        printArray(self.moveArray, self.canvas)
+
 
 class manipulator:
     '''This class will cover all manipulator behaviours'''
@@ -261,15 +310,18 @@ class manipulator:
     directions = ['N','S','E','W']
     colors = { 10: 'red', 20: 'green', 30: 'blue', 40: 'orange', 50: 'yellow' }
 
-    def __init__(self, envMatrix, posRow, posCol, name, iD, *arg):
+    def __init__(self, moveArray, envMatrix, posRow, posCol, name, iD, canvas, recorder,*arg):
         '''This will set up our manipulator and place it on position'''
 
         manipulator.listOfManipulators.append(self)
-        self.envMatrix = envMatrix
+        self.moveArray = moveArray #the full line array
+        self.envMatrix = envMatrix # the array this one can use
 
         self.name = name
         self.iD = iD
         self.color = manipulator.colors[self.iD]
+        self.canvas = canvas
+        self.recorder = recorder
 
         if self.envMatrix[posRow,posCol] == 1:
             self.currentPositionRow = posRow
@@ -294,13 +346,18 @@ class manipulator:
             self.isGrab = False
             self.iD -= self.buforBck
 
+            printArray(self.moveArray, self.canvas, self.recorder)
+
         else:
             if self.buforBck != 1:
                 self.isGrab = True
                 self.iD += self.buforBck
+
+                printArray(self.moveArray, self.canvas, self.recorder)
                 print(self.iD)
 
         self.markPosition()
+
 
     def checkMove(self,direction,envMatrix):
         if direction in self.directions:
@@ -374,6 +431,8 @@ class manipulator:
             # Entering the name into new position
             self.markPosition()
 
+            printArray(self.moveArray, self.canvas, self.recorder)
+
             return True
         else:
             return False
@@ -398,8 +457,8 @@ class manipulator:
                     self.currentPositionCol] = self.iD+100
 
 
-    def getControls(self, master, moveArray, canvas):
-        return controlWindow(master, self, moveArray, canvas)
+    def getControls(self, master, moveArray, canvas, recorder):
+        return controlWindow(master, self, moveArray, canvas, recorder)
 
 
 if __name__ == '__main__':
