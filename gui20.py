@@ -14,7 +14,7 @@ def main():
     liniaBck[3,3] = 1
     liniaBck[3,7:12:2] = 1
 
-    pulpit = recorder(liniaBck, None)
+    pulpit = recorder(liniaBck)
 
     root = tk.Tk()
     app = mainApp(root, liniaBck, pulpit)
@@ -31,6 +31,11 @@ def main():
 
     display(liniaBck, canvas)
     app.showControls()
+
+    print(canvas)
+    print('################')
+    print(liniaBck)
+    print('################')
 
     root.mainloop()
 

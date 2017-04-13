@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib
 import pandas as pd
+import time
 
 import tkinter as tk
 
@@ -17,10 +18,10 @@ def printArray(theArray, theCanvas, theRecorder):
     # n_printTheArray(dataArray=theArray, canvas=theCanvas)
 
     display(theArray, theCanvas) # Showing the graph
-    if theRecorder.rec:
-        theRecorder.record() # recording the state
 
-    print('No. of steps: {}'.format(theRecorder.getTotalTime()))
+    if theRecorder.rec:
+        theRecorder.record(theArray) # recording the state
+
 
 def display(dataArray, canvas):
     colors = { 10: 'red', 20: 'green', 30: 'blue', 40: 'orange', 50: 'yellow' }
@@ -112,7 +113,7 @@ class recorder:
 
 
 
-    def __init__(self, matrix, canvas):
+    def __init__(self, matrix):
         '''This function prepare the recorder object.
         Input:
         matrix - the array that keep the main data of the background system (line)
@@ -120,15 +121,17 @@ class recorder:
         '''
         self.bckColor = 'navy'
         self.dataArray = matrix
-        self.canvas = canvas
+        # self.canvas = canvas
         self.colors = recorder.colors
         self.recording = []
         self.timestep = 0
         self.rec = False #to globally control recording
 
-    def record(self):
-        self.recording.append(self.dataArray)
+    def record(self, array):
+        self.recording.append(np.copy(array))
         self.timestep += 1
+        print('rozmiar : {}'.format(len(self.recording)))
+
 
     def getTime(self):
         return self.timestep
@@ -136,7 +139,16 @@ class recorder:
     def getTotalTime(self):
         return len(self.recording)
 
+    def nextFrame(self):
+        pass
 
+    def play(self):
+
+        for frame in range(self.getTotalTime()):
+
+            display(self.recording[frame], self.canvas)
+            self.canvas.update()
+            time.sleep(0.25)
 
 
 
@@ -170,6 +182,8 @@ class mainApp:
                    height=600)
         self.canvas.configure(background='navy')
         self.canvas.pack(fill='both', expand='yes')
+        self.canvas.update_idletasks
+
         self.master.tk_setPalette(background='#ececec')
         self.master.title('Transport Simulator - v00')
 
@@ -216,7 +230,23 @@ class recorederWindow:
                             text = 'Rec/Stop', width = 15, bg='silver',
                             command = self.toogleRec ).pack()
 
+        self.playButton = tk.Button(self.frame,
+                            text = 'Play', width = 15, bg='silver',
+                            command = self.play ).pack()
+
+
         self.frame.pack(padx=10, pady=10)
+
+    def play(self):
+        self.rec = False
+        self.recorder.rec = False
+
+        self.master.configure(bg = 'green')
+
+        self.recorder.play()
+
+        self.master.configure(bg = 'silver')
+        print(self.recorder.recording)
 
 
     def toogleRec(self):
@@ -346,6 +376,7 @@ class manipulator:
             self.isGrab = False
             self.iD -= self.buforBck
 
+            self.markPosition()
             printArray(self.moveArray, self.canvas, self.recorder)
 
         else:
@@ -353,10 +384,15 @@ class manipulator:
                 self.isGrab = True
                 self.iD += self.buforBck
 
+                self.markPosition()
                 printArray(self.moveArray, self.canvas, self.recorder)
                 print(self.iD)
 
-        self.markPosition()
+            else:
+                self.markPosition()
+
+                display(self.moveArray, self.canvas)
+
 
 
     def checkMove(self,direction,envMatrix):
