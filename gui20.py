@@ -19,13 +19,16 @@ def main():
     app = mainApp(root, liniaBck)
     canvas = app.getCanvas()
 
+    pulpit = recorder(liniaBck, canvas)
+
+
     Adam = manipulator(liniaBck[:, 5:], 3, 4 , 'Adam', 10, 'red')
     Ewa = manipulator(liniaBck, 3, 7, 'Ewa', 20, 'green')
     Zdzich = manipulator(liniaBck, 3, 11, 'Zdzich', 30, 'orange')
 
-    app.drawWindow()
+    display(liniaBck, canvas)
     app.showControls()
-    
+
     root.mainloop()
 
 

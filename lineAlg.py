@@ -8,34 +8,30 @@ def printArray(theArray, theCanvas):
     '''Wrapper around graphic proint to give possibility for
      terminal feedback'''
 
-    col = theArray.shape[1]
-    print(theArray)
+    # col = theArray.shape[1]
+    # print(theArray)
 
     # for x in range(col+1):
     #     print('\r')
 
-    n_printTheArray(dataArray=theArray, canvas=theCanvas)
+    # n_printTheArray(dataArray=theArray, canvas=theCanvas)
+    display(theArray, theCanvas)
 
-# Procedure that plot the array to canvas
-def n_printTheArray(dataArray, canvas):
-    '''
-    This procedure allows to print the array back to the graphical board
-    usefull for redraw or draw loaded data
-    Inputs:
-    dataArray -  the array to display on canvas
-    canvas - tkinter canvas object
-    '''
+def display(dataArray, canvas):
+    colors = { 10: 'red', 20: 'green', 30: 'blue', 40: 'orange', 50: 'yellow' }
+    bckColor = 'navy'
 
     # Let's check the size
     elementsInY = dataArray.shape[0]
     elementsInX = dataArray.shape[1]
 
-    # canvasHeight = 600
-    # canvasWidth  = 800
     canvasWidth  = canvas.winfo_width()
+
     if canvasWidth == 1:
         canvasWidth = 800
+
     canvasHeight = canvas.winfo_height()
+
     if canvasHeight ==1:
         canvasHeight = 600
 
@@ -43,61 +39,92 @@ def n_printTheArray(dataArray, canvas):
     dY = canvasHeight / elementsInY
 
     # Cleaning up the whole canvas space by drawing a white rectangle
-    canvas.create_rectangle(0, 0, canvasWidth, canvasHeight, fill="navy", outline="gray")
+    canvas.create_rectangle(0, 0, canvasWidth, canvasHeight,
+                                fill=bckColor)
+
+    color = 'black' # jus to have it defined somehow
 
     for Row in range(elementsInY):
         for Col in range(elementsInX):
+
+            currentElement = dataArray[Row][Col]
+            lineZ = False
+            lineX = False
+
             # Obsluga tla linii
-            if dataArray[Row][Col] > 0 and dataArray[Row][Col] < 10 :
-                fillColor = "gray"
-                canvas.create_rectangle((Col)*dX, (Row)*dY,
-                    (Col)*dX+dX, (Row)*dY+dY, fill=fillColor, outline="white")
+            # Lets figure out the color first
+            if currentElement > 0: # to not draw aything if zero
 
-                if dataArray[Row][Col] > 1:
+                if currentElement == 1:
+                    color = 'silver' # this will be empty line space
+                elif currentElement < 10: # this mean we are zawieszka
+                    lineZ = True
+                    color = 'gray'
+                elif currentElement <100:
+                    # here we are in range of manipulators
+                    color = 'lime' # to have initially selected color
+                    if currentElement % 10 > 0:
+                        lineZ=True
+
+                    currentElement = (currentElement // 10)*10
+                    print('element: {}'.format(currentElement))
+                    color = colors[currentElement]
+
+
+                # Now we need to decode whts here really is
+                # First lets check if we need to decode anything
+                else: #if thats true we are caaying zawieszka
+                    lineX = True
+                    currentElement -= 100
+                    currentElement = (currentElement // 10)*10
+                    print('element: {}'.format(currentElement))
+                    color = colors[currentElement]
+
+                canvas.create_rectangle((Col)*dX, (Row)*dY,
+                    (Col)*dX+dX, (Row)*dY+dY, fill=color,
+                     outline="white")
+
+                if lineZ:
                     canvas.create_line((Col)*dX, (Row)*dY,
-                    (Col)*dX+dX, (Row)*dY+dY, fill='white', width=2)
+                     (Col)*dX+dX, (Row)*dY+dY, fill='white', width=2)
 
-            # Obsluga manipulatora
-            elif dataArray[Row][Col] >= 10:
+                if lineX:
+                    canvas.create_line((Col)*dX, (Row)*dY,
+                     (Col)*dX+dX, (Row)*dY+dY, fill='white', width=2)
+                    canvas.create_line((Col)*dX+dX, (Row)*dY,
+                     (Col)*dX, (Row)*dY+dY, fill='white', width=2)
 
-                fillColor = 'black'
-                isGrab = False
-
-                iD = dataArray[Row][Col]
-                for mani in manipulator.listOfManipulators:
-                    # Complex condition to be able to handle modified iD when grab is done
-                    # and the iD is oryginal iD + iD zawieszki
-                    if iD >= mani.iD-mani.buforBck  and iD <= mani.iD + mani.buforBck:
-                        fillColor = mani.color
-                        isGrab = mani.isGrab
-                        buforBck = mani.buforBck
-                    else:
-                        pass
-                cellid = dataArray[Row][Col]
-
-                canvas.create_rectangle((Col)*dX, (Row)*dY,
-                    (Col)*dX+dX, (Row)*dY+dY, fill=fillColor, outline="white")
-
-                if buforBck > 1:
-                    if isGrab:
-                        canvas.create_line((Col)*dX, (Row)*dY,
-                        (Col)*dX+dX, (Row)*dY+dY, fill='white', width=2)
-                        canvas.create_line((Col)*dX+dX, (Row)*dY,
-                        (Col)*dX, (Row)*dY+dY, fill='white', width=2)
-                    else:
-                        canvas.create_line((Col)*dX, (Row)*dY,
-                        (Col)*dX+dX, (Row)*dY+dY, fill='white', width=2)
 
 
 # ####################
 # From here Classes ;)
 # ####################
+class recorder:
+    '''This is a class to take care of displayin, recording and playing the
+    main matrix of all elements'''
+
+    colors = { 10: 'red', 20: 'green', 30: 'blue', 40: 'orange', 50: 'yellow' }
+
+
+    def __init__(self, matrix, canvas):
+        '''This function prepare the recorder object.
+        Input:
+        matrix - the array that keep the main data of the background system (line)
+        canvas - tkinter canvas object that is used to draw the data (picture)
+        '''
+        self.bckColor = 'navy'
+        self.dataArray = matrix
+        self.canvas = canvas
+        self.colors = recorder.colors
+
+
 
 
 class mainApp:
     '''Tgis is the class for the Main window of the App'''
     canvas = None
     moveArray = None
+    recorder = None
 
     def __init__(self, master, moveArray):
         self.master = master
@@ -136,7 +163,8 @@ class mainApp:
         self.master.destroy()
 
     def drawWindow(self, *arg):
-        n_printTheArray(self.moveArray, self.canvas)
+
+        display(self.moveArray, self.canvas)
 
     def showControls(self):
         for window in controlWindow.listOfWindows:
@@ -231,8 +259,9 @@ class manipulator:
     buforBck = 1
 
     directions = ['N','S','E','W']
+    colors = { 10: 'red', 20: 'green', 30: 'blue', 40: 'orange', 50: 'yellow' }
 
-    def __init__(self, envMatrix, posRow, posCol, name, iD, color='red'):
+    def __init__(self, envMatrix, posRow, posCol, name, iD, *arg):
         '''This will set up our manipulator and place it on position'''
 
         manipulator.listOfManipulators.append(self)
@@ -240,7 +269,7 @@ class manipulator:
 
         self.name = name
         self.iD = iD
-        self.color = color
+        self.color = manipulator.colors[self.iD]
 
         if self.envMatrix[posRow,posCol] == 1:
             self.currentPositionRow = posRow
@@ -270,6 +299,8 @@ class manipulator:
                 self.isGrab = True
                 self.iD += self.buforBck
                 print(self.iD)
+
+        self.markPosition()
 
     def checkMove(self,direction,envMatrix):
         if direction in self.directions:
@@ -341,12 +372,31 @@ class manipulator:
                         self.currentPositionCol]
 
             # Entering the name into new position
-            self.envMatrix[self.currentPositionRow,
-                        self.currentPositionCol] = self.iD
+            self.markPosition()
 
             return True
         else:
             return False
+
+    def markPosition(self):
+        '''Entering the name into new position
+        Its doing it with the following logic:
+        when the place was 1 - it puts just the manipulator iD
+        if it was 2-9 (zawieszka) then it puts iD + wat it was
+        if we have grab of zawieszka then we return iD manipulator
+        + iD zawieszka + 100 '''
+
+        if not(self.isGrab):
+            if self.buforBck == 1:
+                self.envMatrix[self.currentPositionRow,
+                    self.currentPositionCol] = self.iD
+            else:
+                self.envMatrix[self.currentPositionRow,
+                    self.currentPositionCol] = self.iD+self.buforBck
+        else:
+            self.envMatrix[self.currentPositionRow,
+                    self.currentPositionCol] = self.iD+100
+
 
     def getControls(self, master, moveArray, canvas):
         return controlWindow(master, self, moveArray, canvas)
