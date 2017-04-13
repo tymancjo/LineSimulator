@@ -8,10 +8,10 @@ def printArray(theArray, theCanvas):
     '''Wrapper around graphic proint to give possibility for
      terminal feedback'''
 
-    # col = theArray.shape[1]
-    # print(theArray)
-    #
-    # for x in range(col):
+    col = theArray.shape[1]
+    print(theArray)
+
+    # for x in range(col+1):
     #     print('\r')
 
     n_printTheArray(dataArray=theArray, canvas=theCanvas)
@@ -65,10 +65,15 @@ def n_printTheArray(dataArray, canvas):
 
                 iD = dataArray[Row][Col]
                 for mani in manipulator.listOfManipulators:
-                    if iD == mani.iD:
+                    # Complex condition to be able to handle modified iD when grab is done
+                    # and the iD is oryginal iD + iD zawieszki
+                    if iD >= mani.iD-mani.buforBck  and iD <= mani.iD + mani.buforBck:
                         fillColor = mani.color
                         isGrab = mani.isGrab
                         buforBck = mani.buforBck
+                    else:
+                        pass
+                cellid = dataArray[Row][Col]
 
                 canvas.create_rectangle((Col)*dX, (Row)*dY,
                     (Col)*dX+dX, (Row)*dY+dY, fill=fillColor, outline="white")
@@ -143,6 +148,13 @@ class mainApp:
 
     def getCanvas(self):
         return self.canvas
+
+class recorederWindow:
+    '''This is class for the window that will keep controls for the recorder'''
+
+    def __init__(self, recorder):
+        pass
+
 
 class controlWindow:
     '''This is a control window object for manipulators'''
@@ -251,9 +263,13 @@ class manipulator:
     def grab(self):
         if self.isGrab:
             self.isGrab = False
+            self.iD -= self.buforBck
+
         else:
             if self.buforBck != 1:
                 self.isGrab = True
+                self.iD += self.buforBck
+                print(self.iD)
 
     def checkMove(self,direction,envMatrix):
         if direction in self.directions:
